@@ -1,6 +1,4 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.List;
 
 public interface DataManager {
@@ -13,12 +11,19 @@ public interface DataManager {
 class JDBC implements DataManager{
     private Connection connection;
 
-    public JDBC() {
+    public static void main(String[] arg) {
+        Connection connection;
         try {
-            String url = "jdbc:mysql://localhost:3306/database";
-            String username = "username";
+            String url = "jdbc:mysql://localhost:3306/nutrifit";
+            String username = "root";
             String password = "password";
             connection = DriverManager.getConnection(url, username, password);
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("select * from `food group`");
+
+            while(resultSet.next()) {
+                System.out.println(resultSet.getString("FoodGroupName"));
+            }
         }
         catch (Exception e){
             e.printStackTrace();
