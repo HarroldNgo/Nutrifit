@@ -1,8 +1,10 @@
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public interface DataManager {
-    List<String> fetchData();
+    List<List<String>> fetchData(String table);
+    void addData();
     void deleteData();
     void updateData();
 }
@@ -11,28 +13,58 @@ public interface DataManager {
 class JDBC implements DataManager{
     private Connection connection;
 
+    /*
     public static void main(String[] arg) {
-        Connection connection;
+        JDBC jdbc = new JDBC();
+        List<List<String>> listOfData = jdbc.fetchData("food group");
+        for(List<String> row : listOfData) {
+            for(String value : row) {
+                System.out.println(value);
+            }
+            System.out.println();
+        }
+    }
+     */
+    public JDBC(){
         try {
             String url = "jdbc:mysql://localhost:3306/nutrifit";
             String username = "root";
-            String password = "password";
+            String password = "LordLucyHN123!";
             connection = DriverManager.getConnection(url, username, password);
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("select * from `food group`");
-
-            while(resultSet.next()) {
-                System.out.println(resultSet.getString("FoodGroupName"));
-            }
         }
-        catch (Exception e){
+        catch(Exception e){
             e.printStackTrace();
         }
     }
 
     @Override
-    public List<String> fetchData() {
-        return null;
+    public List<List<String>> fetchData(String table) {
+        List<List<String>> listOfRows = new ArrayList<>();
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("select * from `"+table+"`");
+
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            while(resultSet.next()) {
+                List<String> colData = new ArrayList<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    String value = resultSet.getString(i);
+                    colData.add(value);
+                }
+                listOfRows.add(colData);
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        return listOfRows;
+    }
+
+    @Override
+    public void addData() {
+
     }
 
     @Override

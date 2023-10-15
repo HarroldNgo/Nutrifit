@@ -1,11 +1,14 @@
 import java.sql.Time;
 import java.time.Duration;
-import java.util.Date;
+import java.sql.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Log {
     Date dateOfEntry;
+    public Date getDate(){
+        return this.dateOfEntry;
+    }
 
 }
 class DietLog extends Log {
@@ -29,6 +32,9 @@ class DietLog extends Log {
     public void addNutrientValue(String nutrient, double amount){
         this.nutrientValues.put(nutrient, amount);
     }
+    public Map<String, Double> getNutrientValues() {
+        return this.nutrientValues;
+    }
 
 
 }
@@ -38,7 +44,8 @@ class ExerciseLog extends Log {
     private Duration duration;
     private String intensity;
     private double caloriesBurnt = 0;
-    public ExerciseLog(String exercise, Duration duration, String intensity){
+    public ExerciseLog( Date date, String exercise, Duration duration, String intensity){
+        this.dateOfEntry = date;
         this.exerciseType = exercise;
         this.duration = duration;
         this.intensity = intensity;
@@ -46,5 +53,12 @@ class ExerciseLog extends Log {
     public void calculateCaloriesBurnt(int BMR){
 
     }
+    public double getCaloriesBurnt(){
+        return this.caloriesBurnt;
+    }
 
+    //TEMP METHOD FOR TESTING
+    public void setCaloriesBurnt(double caloriesBurnt) {
+        this.caloriesBurnt = caloriesBurnt;
+    }
 }
