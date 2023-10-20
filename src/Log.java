@@ -19,7 +19,7 @@ public abstract class Log {
 
     /**
      * Creates a Log with a given date and assigns an id
-     * @param date
+     * @param date the date of the log
      */
     public Log(Date date) {
         this.dateOfEntry = date;
@@ -58,8 +58,8 @@ class DietLog extends Log {
 
     /**
      * Constructor for creating a new Diet Log with the given date and meal
-     * @param date
-     * @param meal
+     * @param date the date of the diet log
+     * @param meal the specified meal type
      */
     public DietLog(Date date, String meal){
         super( date);
@@ -94,8 +94,8 @@ class DietLog extends Log {
 
     /**
      * A method used to add an ingredient to this instance of Diet Log
-     * @param ingredient
-     * @param quantity
+     * @param ingredient the ingredient to be added
+     * @param quantity the amount of said ingredient to be added
      */
     public void addIngredient(String ingredient, int quantity){
         this.ingredients.put(ingredient, quantity);
@@ -105,7 +105,7 @@ class DietLog extends Log {
 
     /**
      * Method used to calculate nutrients based on the current list of ingredients
-     * @param nutrientAmount
+     * @param nutrientAmount list of nutrients from the database
      */
     public void calculateNutrients(List<List<String>> nutrientAmount){
         //Use nutrient amount, nutrient name, food group?, food name? from database to get the nutrient amounts
@@ -120,8 +120,8 @@ class DietLog extends Log {
 
     /**
      * Method used to add nutrient values to the list of nutrients
-     * @param nutrient
-     * @param amount
+     * @param nutrient  the nutrient name
+     * @param amount the amount of said nutrient to be added
      */
     public void addNutrientValue(String nutrient, double amount){
         this.nutrientValues.put(nutrient, amount);
@@ -180,10 +180,10 @@ class ExerciseLog extends Log {
 
     /**
      * Constructor for creating an Exercise Log
-     * @param date
-     * @param exercise
-     * @param duration
-     * @param intensity
+     * @param date the date of the log to be created
+     * @param exercise the exercise type of the log to be created
+     * @param duration the duration of the log to be created
+     * @param intensity the intensity of the log to be created
      */
     public ExerciseLog( Date date, String exercise, Duration duration, String intensity){
         super(date);
@@ -194,7 +194,7 @@ class ExerciseLog extends Log {
 
     /**
      * Calculates calories burnt based on BMR and the Exercise Log's information
-     * @param BMR
+     * @param BMR the bmr of a user
      */
     public void calculateCaloriesBurnt(int BMR){
 
