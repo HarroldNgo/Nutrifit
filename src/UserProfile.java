@@ -1,20 +1,23 @@
 import java.sql.Date;
+import java.sql.Time;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class initializes and manages a UserProfile
  * @author Harrold Ngo, Gabrielle Kossecki
  */
 public class UserProfile {
-    private static int id = 0;
+    private static int id = 1;
     private int userId;
     private String name;
     private String sex;
     private Date dateOfBirth;
+    private int age;
     private double height;
     private double weight;
     private String units;
@@ -66,6 +69,7 @@ public class UserProfile {
         //update to database
     }
 
+    public int getId(){return this.userId;}
     /**
      * Accessor method for the name
      * @return a String of the name of the UserProfile
@@ -141,8 +145,16 @@ public class UserProfile {
      */
     public void addDietLog(DietLog log){
         dietlogs.add(log);
+    }
+    public void addDietLog(Date date, String meal, Map<String, Integer> ingredients){
+        DietLog dietLog = new DietLog(date, meal);
+        dietlogs.add(dietLog);
         //add to database
-
+        DataManager dm = JDBC.getInstance();
+        List<String> data = dietLog.toStringList();
+        data.add(""+this.getId());
+        dm.addData("dietlogs", data);
+        dietLog.setIngredients(ingredients);
     }
 
     /**
@@ -152,8 +164,16 @@ public class UserProfile {
      */
     public void addExerciseLog(ExerciseLog log){
         exerciselogs.add(log);
-
+    }
+    public void addExerciseLog(Date date, Time time, String exerciseType, int duration, String intensity){
+        ExerciseLog exerciseLog = new ExerciseLog(date, time, exerciseType, duration, intensity);
+        exerciseLog.calculateCaloriesBurnt(this.BMR);
+        exerciselogs.add(exerciseLog);
         //add to database
+        DataManager dm = JDBC.getInstance();
+        List<String> data = exerciseLog.toStringList();
+        data.add(""+this.getId());
+        dm.addData("exerciselogs", data);
     }
 
     /**
@@ -162,6 +182,20 @@ public class UserProfile {
      * using the Mifflin St Jeor estimation formula
      */
     public void calculateBMR(){
+        setAge();
+        double bmr;
+
+        //Male and female use slightly different formulas
+        if(this.sex=="Female") {
+            bmr = (10*this.weight) + (6.25*this.height) - (5*age) - 161;
+        }
+        else{
+            bmr = (10*this.weight) + (6.25*this.height) - (5*age) + 5;
+        }
+
+        this.BMR = bmr;
+    }
+    public void setAge(){
         //Gets the date of birth in the form of integers for year, month, day
         LocalDate localDate = dateOfBirth.toLocalDate();
         int year = localDate.getYear();
@@ -177,65 +211,27 @@ public class UserProfile {
         //Calculates the age by subtracting the current year and the date of birth year
         //It also factors in the month and day**
         int age = (((cyear*365) + (cmonth*31) + cday)/365)-(((year*365) + (month*31) + day)/365);
-
-        double bmr;
-
-        //Male and female use slightly different formulas
-        if(this.sex=="Female") {
-            bmr = (10*this.weight) + (6.25*this.height) - (5*age) - 161;
-        }
-        else{
-            bmr = (10*this.weight) + (6.25*this.height) - (5*age) + 5;
-        }
-
-        this.BMR = bmr;
+        this.age = age;
+    }
+    public int getAge(){
+        return this.age;
+    }
+    public List<String> toStringList(){
+        List<String> stringList = new ArrayList<>();
+        stringList.add(""+userId);
+        stringList.add(""+name);
+        stringList.add(""+sex);
+        stringList.add(""+dateOfBirth.toString());
+        stringList.add(""+height);
+        stringList.add(""+weight);
+        stringList.add(""+BMR);
+        stringList.add(""+units);
+        return stringList;
     }
 
 
     public static void main(String[] arg) throws ParseException {
-        UserProfile user1 = new UserProfile("John", "Male", Date.valueOf("2000-10-01"),180, 60, "metric");
-        UserProfile user2 = new UserProfile("Bob", "Male", Date.valueOf("2004-07-01"),200, 70, "metric");
-        UserProfile user3 = new UserProfile("Lucy", "Female", Date.valueOf("1999-01-01"),170, 50, "metric");
-        List<UserProfile> upl = new ArrayList<>();
-        upl.add(user1);
-        upl.add(user2);
-        upl.add(user3);
-        System.out.println("Name - Sex - DateOfBirth - Height - Weight - Units - BMR");
-        for(UserProfile up : upl){
-            System.out.println(up.getName()+" "+up.getSex()+" "+up.getDateOfBirth().toString()+" "+up.getHeight()+" "+up.getWeight()+" "+up.getUnits()+" "+up.getBMR());
-            System.out.println();
-        }
-        System.out.println("Actual BMR calculated from website for these users:\n1615\n1860\n1282");
 
-        DietLog d1 = new DietLog(Date.valueOf("2023-10-01"), "breakfast");
-        d1.addIngredient("chicken", 2);
-        d1.addNutrientValue("calories", 300);
-        DietLog d2 = new DietLog(Date.valueOf("2023-10-02"), "lunch");
-        d2.addIngredient("chicken", 1);
-        d2.addNutrientValue("calories", 150);
-        DietLog d3 = new DietLog(Date.valueOf("2023-10-01"), "dinner");
-        d3.addIngredient("chicken", 3);
-        d3.addNutrientValue("calories", 450);
-
-        ExerciseLog e1 = new ExerciseLog(Date.valueOf("2023-10-01"),"walking", Duration.ofMinutes(60), "low");
-        e1.setCaloriesBurnt(160);
-        ExerciseLog e2 = new ExerciseLog(Date.valueOf("2023-10-02"),"running", Duration.ofMinutes(30), "high");
-        e2.setCaloriesBurnt(350);
-        ExerciseLog e3 = new ExerciseLog(Date.valueOf("2023-10-02"),"running", Duration.ofMinutes(30), "high");
-        e3.setCaloriesBurnt(400);
-
-        user1.addDietLog(d1);
-        user1.addExerciseLog(e1);
-        user2.addDietLog(d2);
-        user2.addExerciseLog(e2);
-        user3.addDietLog(d3);
-        user3.addExerciseLog(e3);
-
-        Main main = new Main();
-        main.profileList.add(user1);
-        main.profileList.add(user2);
-        main.profileList.add(user3);
-        main.startGUI();
     }
 
 

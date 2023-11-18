@@ -13,8 +13,6 @@ import java.util.Map;
  * @author Harrold Ngo
  */
 public abstract class Log {
-    private static int id = 0;
-    private int logId;
     private Date dateOfEntry;
 
     /**
@@ -23,8 +21,6 @@ public abstract class Log {
      */
     public Log(Date date) {
         this.dateOfEntry = date;
-        logId = id;
-        id++;
     }
 
     /**
@@ -33,14 +29,6 @@ public abstract class Log {
      */
     public Date getDate(){
         return this.dateOfEntry;
-    }
-
-    /**
-     * Accessor for the id
-     * @return the id of the log instance
-     */
-    public int getId(){
-        return this.logId;
     }
 
 }
@@ -52,9 +40,13 @@ public abstract class Log {
  * @author Harrold Ngo, Gabrielle Kossecki
  */
 class DietLog extends Log {
+    private static int id = 1;
+    private int dietLogId;
     private String mealType;
-    private Map<String, Integer> ingredients;
-    private Map<String, Double> nutrientValues;
+    private List<Ingredient> ingredients;
+    private List<Nutrient> nutrients;
+    private double calories;
+
 
     /**
      * Constructor for creating a new Diet Log with the given date and meal
@@ -62,11 +54,14 @@ class DietLog extends Log {
      * @param meal the specified meal type
      */
     public DietLog(Date date, String meal){
-        super( date);
+        super(date);
         this.mealType = meal;
-        this.ingredients = new HashMap<>();
-        this.nutrientValues = new HashMap<>();
+        this.ingredients = new ArrayList<>();
+        this.nutrients = new ArrayList<>();
+        this.dietLogId = id;
+        id++;
     }
+    public int getDietLogId(){ return this.dietLogId; };
 
     /**
      * Accessor method for the meal type
@@ -80,7 +75,7 @@ class DietLog extends Log {
      * Accessor method for the list of ingredients
      * @return a map of the list of ingredients of the Diet Log instance
      */
-    public Map<String, Integer> getIngredients(){
+    public List<Ingredient> getIngredients(){
         return this.ingredients;
     }
 
@@ -88,79 +83,95 @@ class DietLog extends Log {
      * Accessor method for the list of nutrients
      * @return a map of the list of nutrients of the Diet Log instance
      */
-    public Map<String, Double> getNutrients(){
-        return this.nutrientValues;
+    public List<Nutrient> getNutrients(){
+        return this.nutrients;
     }
 
+    public void addIngredient(Ingredient ingredient) {
+        this.ingredients.add(ingredient);
+    }
     /**
      * A method used to add an ingredient to this instance of Diet Log
      * @param ingredient the ingredient to be added
      * @param quantity the amount of said ingredient to be added
      */
     public void addIngredient(String ingredient, int quantity){
-        this.ingredients.put(ingredient, quantity);
-
-        //calculateNutrients();
+        Ingredient newIngredient = new Ingredient(ingredient, quantity);
+        this.ingredients.add(newIngredient);
+        DataManager dm = JDBC.getInstance();
+        List<String> stringList = newIngredient.toStringList();
+        stringList.add(""+this.getDietLogId());
+        dm.addData("dietlogingredients", stringList);
+    }
+    public void setIngredients(Map<String, Integer> ingredients){
+        for(Map.Entry<String, Integer> ingredient : ingredients.entrySet()){
+            addIngredient(ingredient.getKey(), ingredient.getValue());
+        }
+        calculateNutrients();
+        setCalories();
     }
 
     /**
      * Method used to calculate nutrients based on the current list of ingredients
-     * @param nutrientAmount list of nutrients from the database
      */
-    public void calculateNutrients(List<List<String>> nutrientAmount){
-        //Use nutrient amount, nutrient name, food group?, food name? from database to get the nutrient amounts
-        /* Send FOOD NAME.FoodDescription (complete food name in english, equivalent to ingredient) to database
-         * Get FOOD NAME.FOODID from FOOD NAME csv file
-         * Send FOODID to NUTRIENT AMOUNT to obtain NutrientNameID and its corresponding NutrientValue
-         * Send NutrientNameID to NUTRIENT NAME file to get corresponding NutrientName
-         * Return (NutrientName, NutrientValue)
-         * Maybe? Can revise later
-         */
+    public void calculateNutrients(){
+        DataManager dm = JDBC.getInstance();
+        Map<String, Double> newNutrients = new HashMap<>();
+        for(Ingredient ingredient : ingredients){
+            List<List<String>> nutrients = dm.fetchNutrients(ingredient.getIngredient());
+            for(List<String> nutrient : nutrients){
+                if(newNutrients.get(nutrient.get(0))==null)
+                    newNutrients.put(nutrient.get(0), ingredient.getQuantity()*Double.parseDouble(nutrient.get(1)));
+                else
+                    newNutrients.put(nutrient.get(0), newNutrients.get(nutrient.get(0)) + ingredient.getQuantity()*Double.parseDouble(nutrient.get(1)));
+            }
+        }
+        setNutrientValues(newNutrients);
     }
 
     /**
      * Method used to add nutrient values to the list of nutrients
-     * @param nutrient  the nutrient name
-     * @param amount the amount of said nutrient to be added
      */
-    public void addNutrientValue(String nutrient, double amount){
-        this.nutrientValues.put(nutrient, amount);
+    public void setNutrientValues(Map<String, Double> nutrients){
+        for(Map.Entry<String, Double> nutrient : nutrients.entrySet()){
+            addNutrient(nutrient.getKey(), nutrient.getValue());
+        }
     }
-
-    /**
-     * Accessor method for the list of nutrients of the Diet Log
-     * @return a Map of the list of nutrients of the Diet Log
-     */
-    public Map<String, Double> getNutrientValues() {
-        return this.nutrientValues;
+    public void addNutrient(Nutrient nutrient){
+        this.nutrients.add(nutrient);
+        if(nutrient.getNutrient().compareTo("ENERGY (KILOCALORIES)")==0){
+            calories = nutrient.getAmount();
+        }
+    }
+    public void addNutrient(String nutrient, double amount){
+        Nutrient newNutrient = new Nutrient(nutrient, amount);
+        this.nutrients.add(newNutrient);
+        DataManager dm = JDBC.getInstance();
+        List<String> stringList = newNutrient.toStringList();
+        stringList.add(""+this.getDietLogId());
+        dm.addData("dietlognutrients", stringList);
+    }
+    public void setCalories(){
+        for(Nutrient nutrient : nutrients){
+            if(nutrient.getNutrient().compareTo("ENERGY (KILOCALORIES)")==0){
+                calories = nutrient.getAmount();
+                break;
+            }
+        }
+    }
+    public double getCalories(){
+        return this.calories;
+    }
+    public List<String> toStringList(){
+        List<String> stringList = new ArrayList<>();
+        stringList.add(""+this.getDietLogId());
+        stringList.add(""+this.getDate().toString());
+        stringList.add(""+this.getMealType());
+        return stringList;
     }
 
     public static void main(String[] arg) {
-        DietLog d1 = new DietLog(Date.valueOf("2023-10-01"), "breakfast");
-        d1.addIngredient("chicken", 2);
-        d1.addNutrientValue("calories", 300);
-        DietLog d2 = new DietLog(Date.valueOf("2023-10-02"), "lunch");
-        d2.addIngredient("chicken", 1);
-        d2.addNutrientValue("calories", 150);
-        DietLog d3 = new DietLog(Date.valueOf("2023-10-01"), "dinner");
-        d3.addIngredient("chicken", 3);
-        d3.addNutrientValue("calories", 450);
-        List<DietLog> dl = new ArrayList<>();
-        dl.add(d1);
-        dl.add(d2);
-        dl.add(d3);
-        for(DietLog d : dl){
-            System.out.println(d.getDate().toString() + " " + d.getMealType());
-            System.out.println(" Ingredients: ");
-            for(Map.Entry<String,Integer> entry : d.getIngredients().entrySet()){
-                System.out.println("  "+entry.getKey()+" "+entry.getValue());
-            }
-            System.out.println(" Nutrients: ");
-            for(Map.Entry<String,Double> entry : d.getNutrients().entrySet()){
-                System.out.println("  "+entry.getKey()+" "+entry.getValue());
-            }
-            System.out.println("");
-        }
+
     }
 
 
@@ -173,8 +184,11 @@ class DietLog extends Log {
  * @author Harrold Ngo
  */
 class ExerciseLog extends Log {
+    private static int id = 1;
+    private int exerciseLogId;
+    private Time timeOfEntry;
     private String exerciseType;
-    private Duration duration;
+    private int duration;
     private String intensity;
     private double caloriesBurnt = 0;
 
@@ -185,21 +199,18 @@ class ExerciseLog extends Log {
      * @param duration the duration of the log to be created
      * @param intensity the intensity of the log to be created
      */
-    public ExerciseLog( Date date, String exercise, Duration duration, String intensity){
+    public ExerciseLog( Date date, Time time, String exercise, int duration, String intensity){
         super(date);
+        this.timeOfEntry = time;
         this.exerciseType = exercise;
         this.duration = duration;
         this.intensity = intensity;
+        this.exerciseLogId = id;
+        id++;
     }
+    public int getExerciseLogId(){ return this.exerciseLogId; }
 
-    /**
-     * Calculates calories burnt based on BMR and the Exercise Log's information
-     * @param BMR the bmr of a user
-     */
-    public void calculateCaloriesBurnt(int BMR){
-
-    }
-
+    public Time getTime(){ return this.timeOfEntry; }
     /**
      * Accessor method for the type of exercise
      * @return a String for the type of exercise of the Exercise Log
@@ -212,7 +223,7 @@ class ExerciseLog extends Log {
      * Accessor method for the duration
      * @return a Duration type variable of the Exercise Log
      */
-    public Duration getDuration(){
+    public int getDuration(){
         return this.duration;
     }
 
@@ -237,23 +248,34 @@ class ExerciseLog extends Log {
         this.caloriesBurnt = caloriesBurnt;
     }
 
+    /**
+     * Calculates calories burnt based on BMR and the Exercise Log's information
+     * @param BMR the bmr of a user
+     */
+    public void calculateCaloriesBurnt(double BMR){
+        double met = 0;
+        if(this.getIntensity().equals("Low")) met = 1;
+        else if(this.getIntensity().equals("Medium")) met = 3;
+        else if(this.getIntensity().equals("High")) met = 6;
+        else if(this.getIntensity().equals("Very High")) met = 9;
+        double caloriesPer = (met * 3.5 * BMR)/5000;
+        double calories = caloriesPer*this.getDuration();
+        this.setCaloriesBurnt(calories);
+    }
+
+    public List<String> toStringList(){
+        List<String> stringList = new ArrayList<>();
+        stringList.add(""+this.getExerciseLogId());
+        stringList.add(""+this.getDate().toString());
+        stringList.add(""+this.getTime().toString());
+        stringList.add(""+this.getExerciseType());
+        stringList.add(""+this.getDuration());
+        stringList.add(""+this.getIntensity());
+        stringList.add(""+this.getCaloriesBurnt());
+        return stringList;
+    }
+
     public static void main(String[] arg) {
-        ExerciseLog e1 = new ExerciseLog(Date.valueOf("2023-10-01"),"walking", Duration.ofMinutes(60), "low");
-        e1.setCaloriesBurnt(160);
-        ExerciseLog e2 = new ExerciseLog(Date.valueOf("2023-10-02"),"running", Duration.ofMinutes(30), "high");
-        e2.setCaloriesBurnt(350);
-        ExerciseLog e3 = new ExerciseLog(Date.valueOf("2023-10-02"),"running", Duration.ofMinutes(30), "high");
-        e3.setCaloriesBurnt(400);
 
-        List<ExerciseLog> el = new ArrayList<>();
-        el.add(e1);
-        el.add(e2);
-        el.add(e3);
-
-        System.out.println("Date - ExerciseType - Duration - Intensity - Calories Burnt");
-        for(ExerciseLog log : el){
-            System.out.println(log.getDate().toString()+" "+log.getExerciseType()+" "+log.getDuration().toMinutes()+" "+log.getIntensity()+ " "+log.getCaloriesBurnt());
-            System.out.println();
-        }
     }
 }

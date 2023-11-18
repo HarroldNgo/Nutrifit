@@ -11,11 +11,15 @@ import java.util.List;
 public interface DataManager {
     List<List<String>> fetchData(String table);
 
-    List<List<String>> fetchDataForeignKey(String table, String col, int id);
+    List<List<String>> fetchSpecificData(String table, String col, String id);
 
-    void addData();
+    //Cant be bothered to create this sql statement dynamically
+    List<List<String>> fetchNutrients(String name);
+
+    List<List<String>> fetchFoodGroups(String foodName);
+    void addData(String table, List<String> data);
     void deleteData();
-    void updateData();
+    void updateData(String table, List<String> columns, List<String> data);
 }
 
 /**
@@ -98,11 +102,67 @@ class JDBC implements DataManager{
      * @return a List of a List of Strings from the SQL table
      */
     @Override
-    public List<List<String>> fetchDataForeignKey(String table, String col, int id) {
+    public List<List<String>> fetchSpecificData(String table, String col, String id) {
         List<List<String>> listOfRows = new ArrayList<>();
         try {
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("select * from `"+table+"` WHERE "+col+"="+id);
+
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            while(resultSet.next()) {
+                List<String> colData = new ArrayList<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    String value = resultSet.getString(i);
+                    colData.add(value);
+                }
+                listOfRows.add(colData);
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        return listOfRows;
+    }
+    public List<List<String>> fetchNutrients(String name){
+        List<List<String>> listOfRows = new ArrayList<>();
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("" +
+                    "select `nutrient name`.NutrientName, `nutrient amount`.NutrientValue " +
+                    "from `food name` " +
+                    "join `nutrient amount` on `food name`.FoodID = `nutrient amount`.FoodID " +
+                    "join `nutrient name` on `nutrient amount`.NutrientID = `nutrient name`.NutrientID " +
+                    "WHERE `food name`.FoodDescription = \""+name+"\";");
+
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            while(resultSet.next()) {
+                List<String> colData = new ArrayList<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    String value = resultSet.getString(i);
+                    colData.add(value);
+                }
+                listOfRows.add(colData);
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        return listOfRows;
+    }
+
+    public List<List<String>> fetchFoodGroups(String foodName) {
+        List<List<String>> listOfRows = new ArrayList<>();
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("" +
+                    "select `food group`.FoodGroupName " +
+                    "from `food name` " +
+                    "join `food group` on `food name`.FoodGroupID = `food group`.FoodGroupID " +
+                    "WHERE `food name`.FoodDescription = \""+foodName+"\";");
 
             ResultSetMetaData metaData = resultSet.getMetaData();
             int columnCount = metaData.getColumnCount();
@@ -126,8 +186,27 @@ class JDBC implements DataManager{
      * A method used to insert data into the database
      */
     @Override
-    public void addData() {
+    public void addData(String table, List<String> data) {
+        try {
+            StringBuilder statementBuilder = new StringBuilder("insert into ").append(table).append(" values (");
+            for (int i = 0; i < data.size(); i++) {
+                statementBuilder.append("?");
+                if (i < data.size() - 1) {
+                    statementBuilder.append(", ");
+                }
+            }
+            statementBuilder.append(")");
 
+            PreparedStatement preparedStatement = connection.prepareStatement(statementBuilder.toString());
+            for(int i=0; i<data.size();i++){
+                preparedStatement.setString(i+1, data.get(i));
+            }
+            preparedStatement.executeUpdate();
+            System.out.println("Data inserted to database successfully!");
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -142,7 +221,22 @@ class JDBC implements DataManager{
      * A method used to update data in the database
      */
     @Override
-    public void updateData() {
+    public void updateData(String table, List<String> columns, List<String> data) {
+        try {StringBuilder statementBuilder = new StringBuilder("update ").append(table).append(" set ");
+            for (int i = 1; i < data.size(); i++) {
+                statementBuilder.append(columns.get(i)+" = '"+data.get(i)+"'");
+                if (i < data.size() - 1) {
+                    statementBuilder.append(", ");
+                }
+            }
+            statementBuilder.append(" where "+columns.get(0)+" = "+data.get(0));
 
+            PreparedStatement preparedStatement = connection.prepareStatement(statementBuilder.toString());
+            preparedStatement.executeUpdate();
+            System.out.println("Data in table updated successfully!");
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
     }
 }
