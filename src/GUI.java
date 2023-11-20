@@ -511,7 +511,7 @@ class CreateDietLogScreen extends JPanel {
         dateTextField.setPreferredSize(new Dimension(500, 30));
 
         JLabel mealtype = new JLabel("Meal Type: ");
-        String[] unit = {"Breakfast", "Lunch", "Dinner"};
+        String[] unit = {"Breakfast", "Lunch", "Dinner", "Snack"};
         JComboBox<String> mealTypeComboBox = new JComboBox<>(unit);
 
         DefaultTableModel ingredientTableModel = new DefaultTableModel(new String[]{"Ingredients", "Amount"}, 0);
