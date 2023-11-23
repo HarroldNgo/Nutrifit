@@ -2,12 +2,16 @@
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.XYShapeAnnotation;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
 import java.nio.ByteOrder;
 import java.sql.Time;
 import java.text.ParseException;
@@ -25,18 +29,24 @@ import java.util.List;
  *
  * @author Harrold Ngo
  */
-interface Visualizer {
-    public void show();
+abstract class Visualizer {
+    protected JFreeChart chart;
+    protected JFrame window;
+    public abstract void addToDataset() throws Exception;
+    public abstract void createChart();
+    public abstract void show();
 }
 
 /**
  * This class initializes and creates the chart used to
  * show calorie intake and calories burnt
  */
-class CalorieExerciseVisualizer implements Visualizer {
-    DefaultCategoryDataset dataset;
-    JFreeChart chart;
-    JFrame window;
+class CalorieExerciseVisualizer extends Visualizer {
+    private DefaultCategoryDataset dataset;
+    private Date start;
+    private Date end;
+    private List<DietLog> dietLogs;
+    private List<ExerciseLog> exerciseLogs;
     /**
      * Creates a new Calorie Exercise Visualizer chart that
      * displays the calorie intake and calorie outtake overtime
@@ -46,13 +56,29 @@ class CalorieExerciseVisualizer implements Visualizer {
      * @param dietLogs
      * @param exerciseLogs
      */
-    public CalorieExerciseVisualizer(Date start, Date end, List<DietLog> dietLogs, List<ExerciseLog> exerciseLogs) {
+    public CalorieExerciseVisualizer(Date start, Date end, List<DietLog> dietLogs, List<ExerciseLog> exerciseLogs) throws Exception {
         this.dataset = new DefaultCategoryDataset();
+        this.start=start;
+        this.end=end;
+        this.dietLogs=dietLogs;
+        this.exerciseLogs=exerciseLogs;
+        addToDataset();
+        createChart();
+        show();
+    }
 
+    @Override
+    public void addToDataset() throws Exception {
         //Iterates through each diet log to find logs that correspond to the specified time range
         for(DietLog log : dietLogs) {
             Date s = Date.valueOf(LocalDate.parse(start.toString()).minusDays(1).toString());
             Date e = Date.valueOf(LocalDate.parse(end.toString()).plusDays(1).toString());
+            long diff = end.getTime() - start.getTime();
+            long numDays = (diff / (1000 * 60 * 60 * 24)) % 365;
+            System.out.println(s.toString()+" "+e.toString());
+            if(numDays < 0){
+                throw new Exception("Start must be before end date");
+            }
             if(log.getDate().after(s) && log.getDate().before(e)){
                 long difference = log.getDate().getTime() - start.getTime();
                 long day = (difference / (1000 * 60 * 60 * 24)) % 365;
@@ -79,19 +105,20 @@ class CalorieExerciseVisualizer implements Visualizer {
                 dataset.addValue(calories, "Calories Burnt", "Day " + day);
             }
         }
+    }
 
+    @Override
+    public void createChart(){
         //The actual creation/initialization of the chart used
-        chart = ChartFactory.createLineChart(
+        this.chart = ChartFactory.createLineChart(
                 "Calorie and Exercise",
                 "Day",
                 "Calories",
                 this.dataset
         );
-
-    }
-
-    public static void main(String[] arg) throws ParseException {
-
+        CategoryPlot plot = (CategoryPlot) chart.getPlot();
+        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
+        renderer.setDefaultShapesVisible(true);
     }
 
     @Override
@@ -102,22 +129,54 @@ class CalorieExerciseVisualizer implements Visualizer {
         window.pack();
         window.setVisible(true);
     }
+    public static void main(String[] arg) {
+
+    }
 }
 
-class NutrientIntakeVisualizer implements Visualizer {
-    DefaultCategoryDataset dataset;
-    JFreeChart chart;
-    JFreeChart recommendedChart;
-    JFrame window;
-    public NutrientIntakeVisualizer(Date start, Date end, List<DietLog> dietLogs){
+class NutrientIntakeVisualizer extends Visualizer {
+    private DefaultCategoryDataset dataset;
+    private Date start;
+    private Date end;
+    private List<DietLog> dietLogs;
+    private JFreeChart recommendedChart;
+    public NutrientIntakeVisualizer(Date start, Date end, List<DietLog> dietLogs) throws Exception {
+        this.start=start;
+        this.end=end;
+        this.dietLogs=dietLogs;
+        addToDataset();
+        createChart();
+        createRecommendedChart();
+        show();
+    }
+    public void createRecommendedChart(){
+        DefaultCategoryDataset recommendedDataset = new DefaultCategoryDataset();
+        recommendedDataset.addValue((300000/414974.0)*100, "Nutrients", "Carbohydrate");
+        recommendedDataset.addValue((65000/414974.0)*100, "Nutrients", "Fat");
+        recommendedDataset.addValue((25000/414974.0)*100, "Nutrients", "Fibre");
+        recommendedDataset.addValue((20000/414974.0)*100, "Nutrients", "Satu/Trans Fats");
+        recommendedDataset.addValue((2400/414974.0)*100, "Nutrients", "Sodium");
+        recommendedDataset.addValue((2574/414974.0)*100, "Nutrients", "Other Nutrients");
+        this.recommendedChart = ChartFactory.createBarChart(
+                "Recommended Daily Nutrients",
+                "Nutrients",
+                "Amount(%)",
+                recommendedDataset
+        );
+    }
+
+    @Override
+    public void addToDataset() throws Exception {
         this.dataset = new DefaultCategoryDataset();
         Map<String, Double> tempMap = new HashMap<>();
         Date s = Date.valueOf(LocalDate.parse(start.toString()).minusDays(1).toString());
         Date e = Date.valueOf(LocalDate.parse(end.toString()).plusDays(1).toString());
-
         LocalDateTime startDate = LocalDate.parse(start.toString()).atStartOfDay();
         LocalDateTime endDate = LocalDate.parse(end.toString()).atStartOfDay();
         long numOfDays = Duration.between(startDate, endDate).toDays() + 1;
+        if(numOfDays < 1){
+            throw new Exception("Start date is after End date");
+        }
         for(DietLog log : dietLogs){
             if(log.getDate().after(s) && log.getDate().before(e)){
                 for(Nutrient nutrient : log.getNutrients()){
@@ -141,41 +200,28 @@ class NutrientIntakeVisualizer implements Visualizer {
             total += amt;
         }
         for(Double amt : allNutrientsAmt){
-            System.out.println(amt);
             for(Map.Entry<String, Double> entry : tempMap.entrySet()){
                 if(count>4) break;
                 if(amt==entry.getValue()){
                     double percentValue = ((entry.getValue()) / numOfDays / total)*100;
                     dataset.addValue(percentValue, "Nutrients", entry.getKey());
                     count++;
-                    System.out.println(percentValue +" ");
                 }
             }
             double otherPercentValues = ((amt) / numOfDays / total)*100;
             others += otherPercentValues;
         }
-        System.out.println(numOfDays +" "+total+" "+others);
 
         dataset.addValue(others, "Nutrients", "Other Nutrients");
+    }
+
+    @Override
+    public void createChart() {
         chart = ChartFactory.createBarChart(
                 "Average Daily Nutrients",
                 "Nutrients",
                 "Amount(%)",
                 this.dataset
-        );
-
-        DefaultCategoryDataset recommendedDataset = new DefaultCategoryDataset();
-        recommendedDataset.addValue((300000/414974.0)*100, "Nutrients", "Carbohydrate");
-        recommendedDataset.addValue((65000/414974.0)*100, "Nutrients", "Fat");
-        recommendedDataset.addValue((25000/414974.0)*100, "Nutrients", "Fibre");
-        recommendedDataset.addValue((20000/414974.0)*100, "Nutrients", "Satu/Trans Fats");
-        recommendedDataset.addValue((2400/414974.0)*100, "Nutrients", "Sodium");
-        recommendedDataset.addValue((2574/414974.0)*100, "Nutrients", "Other Nutrients");
-        this.recommendedChart = ChartFactory.createBarChart(
-                "Recommended Daily Nutrients",
-                "Nutrients",
-                "Amount(%)",
-                recommendedDataset
         );
     }
 
@@ -192,42 +238,16 @@ class NutrientIntakeVisualizer implements Visualizer {
     }
 }
 
-class DietAlignsVisualizer implements Visualizer {
-    UserProfile selectedProfile;
-    DefaultPieDataset dataset;
-    JFreeChart chart;
-    JFreeChart chartCFG;
-    JFrame window;
+class DietAlignsVisualizer extends Visualizer {
+    private DefaultPieDataset dataset;
+    private UserProfile selectedProfile;
+    private JFreeChart chartCFG;
     public DietAlignsVisualizer(UserProfile selectedProfile){
-        //check ingredients with food groups from databse
-        //2 pi charts
-        this.dataset = new DefaultPieDataset<>();
         this.selectedProfile = selectedProfile;
-        List<DietLog> dietLogs = selectedProfile.getDietLogs();
-        Map<String, Integer> foodGroups = new HashMap<>();
-        DataManager dm = JDBC.getInstance();
-        for(DietLog dietLog : dietLogs){
-            for(Ingredient ingredient : dietLog.getIngredients()){
-                String foodGroup = dm.fetchFoodGroups(ingredient.getIngredient()).get(0).get(0);
-                if (foodGroups.containsKey(foodGroup)) {
-                    foodGroups.put(foodGroup, foodGroups.get(foodGroup)+1);
-                }
-                else {
-                    foodGroups.put(foodGroup, 1);
-                }
-            }
-        }
-        for(Map.Entry<String, Integer> foodGroup : foodGroups.entrySet()){
-            this.dataset.setValue(foodGroup.getKey(), foodGroup.getValue());
-        }
-        this.chart = ChartFactory.createPieChart(
-                "Current Diet",
-                dataset,
-                true,
-                true,
-                false
-        );
+        addToDataset();
+        createChart();
         createCFGChart();
+        show();
     }
     public void createCFGChart(){
         DefaultPieDataset cfgDataset = new DefaultPieDataset();
@@ -300,6 +320,39 @@ class DietAlignsVisualizer implements Visualizer {
         this.chartCFG = ChartFactory.createPieChart(
                 "CFG Recommended Diet",
                 cfgDataset,
+                true,
+                true,
+                false
+        );
+    }
+
+    @Override
+    public void addToDataset() {
+        this.dataset = new DefaultPieDataset<>();
+        List<DietLog> dietLogs = selectedProfile.getDietLogs();
+        Map<String, Integer> foodGroups = new HashMap<>();
+        DataManager dm = new DataManager(JDBC.getInstance());
+        for(DietLog dietLog : dietLogs){
+            for(Ingredient ingredient : dietLog.getIngredients()){
+                String foodGroup = dm.fetchFoodGroups(ingredient.getIngredient()).get(0).get(0);
+                if (foodGroups.containsKey(foodGroup)) {
+                    foodGroups.put(foodGroup, foodGroups.get(foodGroup)+1);
+                }
+                else {
+                    foodGroups.put(foodGroup, 1);
+                }
+            }
+        }
+        for(Map.Entry<String, Integer> foodGroup : foodGroups.entrySet()){
+            this.dataset.setValue(foodGroup.getKey(), foodGroup.getValue());
+        }
+    }
+
+    @Override
+    public void createChart() {
+        this.chart = ChartFactory.createPieChart(
+                "Current Diet",
+                dataset,
                 true,
                 true,
                 false

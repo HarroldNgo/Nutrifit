@@ -1,22 +1,21 @@
 import javax.swing.*;
 
 class PopUpWindowMaker {
-    private ErrorPopUpWindow error;
-    private MessagePopUpWindow message;
-    private WarningPopUpWindow warning;
-    public PopUpWindowMaker() {
-        error = new ErrorPopUpWindow();
-        message = new MessagePopUpWindow();
-        warning = new WarningPopUpWindow();
+    private String type;
+    public PopUpWindowMaker(String type) {
+        this.type = type;
     }
-    public void showError(String text){
-        error.show(text);
-    }
-    public void showMessage(String text){
-        message.show(text);
-    }
-    public void showWarning(String text){
-        warning.show(text);
+    public PopUpWindow createPopUp(){
+        switch (this.type.toLowerCase()) {
+            case "error":
+                return new ErrorPopUpWindow();
+            case "message":
+                return new MessagePopUpWindow();
+            case "warning":
+                return new WarningPopUpWindow();
+            default:
+                throw new IllegalArgumentException("Unknown PopUpWindow type");
+        }
     }
 }
 interface PopUpWindow {
@@ -32,13 +31,13 @@ class MessagePopUpWindow implements PopUpWindow {
 
     @Override
     public void show(String text) {
-
+        JOptionPane.showMessageDialog(null, text);
     }
 }
 class WarningPopUpWindow implements PopUpWindow {
 
     @Override
     public void show(String text) {
-
+        JOptionPane.showMessageDialog(null, text, "Warning", JOptionPane.WARNING_MESSAGE);
     }
 }

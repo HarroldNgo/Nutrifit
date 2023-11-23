@@ -98,7 +98,7 @@ class DietLog extends Log {
     public void addIngredient(String ingredient, int quantity){
         Ingredient newIngredient = new Ingredient(ingredient, quantity);
         this.ingredients.add(newIngredient);
-        DataManager dm = JDBC.getInstance();
+        DataManager dm = new DataManager(JDBC.getInstance());
         List<String> stringList = newIngredient.toStringList();
         stringList.add(""+this.getDietLogId());
         dm.addData("dietlogingredients", stringList);
@@ -115,7 +115,7 @@ class DietLog extends Log {
      * Method used to calculate nutrients based on the current list of ingredients
      */
     public void calculateNutrients(){
-        DataManager dm = JDBC.getInstance();
+        DataManager dm = new DataManager(JDBC.getInstance());
         Map<String, Double> newNutrients = new HashMap<>();
         for(Ingredient ingredient : ingredients){
             List<List<String>> nutrients = dm.fetchNutrients(ingredient.getIngredient());
@@ -146,7 +146,7 @@ class DietLog extends Log {
     public void addNutrient(String nutrient, double amount){
         Nutrient newNutrient = new Nutrient(nutrient, amount);
         this.nutrients.add(newNutrient);
-        DataManager dm = JDBC.getInstance();
+        DataManager dm = new DataManager(JDBC.getInstance());
         List<String> stringList = newNutrient.toStringList();
         stringList.add(""+this.getDietLogId());
         dm.addData("dietlognutrients", stringList);
@@ -242,8 +242,7 @@ class ExerciseLog extends Log {
     public double getCaloriesBurnt(){
         return this.caloriesBurnt;
     }
-
-    //TEMP METHOD FOR TESTING
+    
     public void setCaloriesBurnt(double caloriesBurnt) {
         this.caloriesBurnt = caloriesBurnt;
     }

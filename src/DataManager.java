@@ -2,13 +2,45 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+class DataManager {
+    private DataManagerStrategy dataManagerStrategy;
+    public DataManager(DataManagerStrategy dataManagerStrategy) {
+        this.dataManagerStrategy = dataManagerStrategy;
+    }
+    public void setDataManagerStrategy(DataManagerStrategy dataManagerStrategy){
+        this.dataManagerStrategy = dataManagerStrategy;
+    }
+    List<List<String>> fetchData(String table) {
+        return this.dataManagerStrategy.fetchData(table);
+    }
+    List<List<String>> fetchSpecificData(String table, String col, String id){
+        return this.dataManagerStrategy.fetchSpecificData(table, col, id);
+    }
+
+    //Cant be bothered to create this sql statement dynamically
+    List<List<String>> fetchNutrients(String name){
+        return this.dataManagerStrategy.fetchNutrients(name);
+    }
+
+    List<List<String>> fetchFoodGroups(String foodName){
+        return this.dataManagerStrategy.fetchFoodGroups(foodName);
+    }
+    void addData(String table, List<String> data){
+        this.dataManagerStrategy.addData(table, data);
+    }
+    void updateData(String table, List<String> columns, List<String> data){
+        this.dataManagerStrategy.updateData(table, columns, data);
+    }
+
+}
+
 /**
  * Interface used to manage all data sources that the
  * application may or may not use
  *
  * @author Harrold Ngo
  */
-public interface DataManager {
+interface DataManagerStrategy {
     List<List<String>> fetchData(String table);
 
     List<List<String>> fetchSpecificData(String table, String col, String id);
@@ -26,7 +58,7 @@ public interface DataManager {
  * A class that is specifically used for connecting to and
  * retreiving/inputing data from an SQL database
  */
-class JDBC implements DataManager{
+class JDBC implements DataManagerStrategy{
     private Connection connection;
     private static JDBC jdbcInstance;
 
@@ -38,10 +70,16 @@ class JDBC implements DataManager{
         try {
             String url = "jdbc:mysql://localhost:3306/nutrifit";
             String username = "root";
-            String password = "LordLucyHN123!";
+            String password = "1234";
             connection = DriverManager.getConnection(url, username, password);
         }
         catch(Exception e){
+            PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("warning");
+            PopUpWindow warning = popUpWindowMaker.createPopUp();
+            warning.show("Database connection failed.\n" +
+                    "Any creation of UserProfile, DietLog, ExerciseLog will not be stored in a database\n" +
+                    "Functions such as Adding ingredients will not work as intended as ingredients are not available\n" +
+                    "This also impedes creation of diet logs\n");
             e.printStackTrace();
         }
     }

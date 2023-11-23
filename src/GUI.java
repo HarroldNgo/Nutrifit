@@ -84,6 +84,10 @@ class CreateUserProfileScreen extends JPanel{
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
+                    if(nameTextField.getText().isBlank()) throw new Exception("Fill out Name text field");
+                    if(dateTextField.getText().isBlank()) throw new Exception("Fill out Date text field");
+                    if(heightTextField.getText().isBlank()) throw new Exception("Fill out Height text field");
+                    if(weightTextField.getText().isBlank()) throw new Exception("Fill out Weight text field");
                     main.addProfile(
                             nameTextField.getText(),
                             sexComboBox.getSelectedItem().toString(),
@@ -92,9 +96,16 @@ class CreateUserProfileScreen extends JPanel{
                             Double.parseDouble(weightTextField.getText()),
                             unitsComboBox.getSelectedItem().toString()
                     );
+                    nameTextField.setText("");
+                    sexComboBox.setSelectedIndex(0);
+                    dateTextField.setText("");
+                    heightTextField.setText("");
+                    weightTextField.setText("");
+                    unitsComboBox.setSelectedIndex(0);
                 } catch (Exception ex) {
-                    PopUpWindowMaker error = new PopUpWindowMaker();
-                    error.showError("Please have all fields filled out and\ninput a valid number for height and date");
+                    PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("error");
+                    PopUpWindow error = popUpWindowMaker.createPopUp();
+                    error.show("Please have all fields filled out and\ninput a valid number for height and weight");
                 }
             }
         });
@@ -175,8 +186,16 @@ class MainMenuScreen extends JPanel implements ProfileObserver{
         showDietAlignsButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Visualizer dietAlignsVisualizer = new DietAlignsVisualizer(selectedProfile);
-                dietAlignsVisualizer.show();
+                try {
+                    if(selectedProfile.getDietLogs().isEmpty()) throw new Exception("Diet Logs are empty!");
+                    Visualizer dietAlignsVisualizer = new DietAlignsVisualizer(selectedProfile);
+                } catch (Exception ex){
+                    PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("error");
+                    PopUpWindow error = popUpWindowMaker.createPopUp();
+                    error.show("Minimum 1 diet log entry is required.");
+                    ex.printStackTrace();
+                }
+
             }
         });
         navigation.add(showDietAlignsButton);
@@ -212,7 +231,6 @@ class MainMenuScreen extends JPanel implements ProfileObserver{
         JLabel bmr = new JLabel(""+selectedProfile.getBMR());
         bmr.setFont(info.getFont().deriveFont(info.getFont().getStyle() & ~Font.BOLD));
         JLabel units = new JLabel(""+selectedProfile.getUnits());
-        System.out.println(""+selectedProfile.getUnits());
         units.setFont(info.getFont().deriveFont(info.getFont().getStyle() & ~Font.BOLD));
         userInfo.add(info);
         userInfo.add(name);
@@ -292,14 +310,25 @@ class EditProfileScreen extends JPanel implements ProfileObserver{
         update.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                main.updateProfile(
-                        nameTextField.getText(),
-                        sexComboBox.getSelectedItem().toString(),
-                        Date.valueOf(dateTextField.getText()),
-                        Double.parseDouble(heightTextField.getText()),
-                        Double.parseDouble(weightTextField.getText()),
-                        unitsComboBox.getSelectedItem().toString()
-                );
+                try {
+                    if(nameTextField.getText().isBlank()) throw new Exception("Fill out Name text field");
+                    if(dateTextField.getText().isBlank()) throw new Exception("Fill out Date text field");
+                    if(heightTextField.getText().isBlank()) throw new Exception("Fill out Height text field");
+                    if(weightTextField.getText().isBlank()) throw new Exception("Fill out Weight text field");
+                    main.updateProfile(
+                            nameTextField.getText(),
+                            sexComboBox.getSelectedItem().toString(),
+                            Date.valueOf(dateTextField.getText()),
+                            Double.parseDouble(heightTextField.getText()),
+                            Double.parseDouble(weightTextField.getText()),
+                            unitsComboBox.getSelectedItem().toString()
+                    );
+                }
+                catch(Exception ex) {
+                    PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("error");
+                    PopUpWindow error = popUpWindowMaker.createPopUp();
+                    error.show("Please have all fields filled out and\ninput a valid number for height and weight");
+                }
 
             }
         });
@@ -371,18 +400,29 @@ class EditProfileScreen extends JPanel implements ProfileObserver{
         update.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                double heightcm = 0;
-                heightcm += Double.parseDouble(feetTextField.getText())*30.48;
-                heightcm += Double.parseDouble(inchesTextField.getText())*2.54;
-                double kg = Double.parseDouble(weightTextField.getText())/2.205;
-                main.updateProfile(
-                        nameTextField.getText(),
-                        sexComboBox.getSelectedItem().toString(),
-                        Date.valueOf(dateTextField.getText()),
-                        heightcm,
-                        kg,
-                        unitsComboBox.getSelectedItem().toString()
-                );
+                try {
+                    if(nameTextField.getText().isBlank()) throw new Exception("Fill out Name text field");
+                    if(dateTextField.getText().isBlank()) throw new Exception("Fill out Date text field");
+                    if(feetTextField.getText().isBlank()) throw new Exception("Fill out Feet text field");
+                    if(inchesTextField.getText().isBlank()) throw new Exception("Fill out Inches text field");
+                    if(weightTextField.getText().isBlank()) throw new Exception("Fill out Weight text field");
+                    double heightcm = 0;
+                    heightcm += Double.parseDouble(feetTextField.getText())*30.48;
+                    heightcm += Double.parseDouble(inchesTextField.getText())*2.54;
+                    double kg = Double.parseDouble(weightTextField.getText())/2.205;
+                    main.updateProfile(
+                            nameTextField.getText(),
+                            sexComboBox.getSelectedItem().toString(),
+                            Date.valueOf(dateTextField.getText()),
+                            heightcm,
+                            kg,
+                            unitsComboBox.getSelectedItem().toString()
+                    );
+                }catch(Exception ex) {
+                    PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("error");
+                    PopUpWindow error = popUpWindowMaker.createPopUp();
+                    error.show("Please have all fields filled out and\ninput a valid number for height and weight");
+                }
             }
         });
 
@@ -549,17 +589,32 @@ class CreateDietLogScreen extends JPanel {
                 try {
                     if(ingredientTableModel.getRowCount()<1) throw new Exception("Missing ingredients");
                     for(int i = 0; i<ingredientTableModel.getRowCount(); i++){
+                        String foodName = (String)ingredientTableModel.getValueAt(i, 0);
                         int amount = Integer.parseInt((String)ingredientTableModel.getValueAt(i, 1));
-                        ingredients.put((String)ingredientTableModel.getValueAt(i, 0), amount);
+                        if(ingredients.containsKey(foodName)){
+                            ingredients.put(foodName, ingredients.get(foodName)+amount);
+                        }
+                        else {
+                            ingredients.put((String)ingredientTableModel.getValueAt(i, 0), amount);
+                        }
+
                     }
                     main.addDietLog(
                             Date.valueOf(dateTextField.getText()),
                             mealTypeComboBox.getSelectedItem().toString(),
                             ingredients
                     );
+                    ingredientTableModel.setRowCount(0);
+                    ingredientsAmount.setText("");
+                    dateTextField.setText("");
+                    mealTypeComboBox.setSelectedIndex(0);
                 } catch(Exception ex){
-                    PopUpWindowMaker error = new PopUpWindowMaker();
-                    error.showError("Please have all fields filled out and have a valid number for ingredient amount\n As well as at least 1 added to the log");
+                    ex.printStackTrace();
+                    PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("error");
+                    PopUpWindow error = popUpWindowMaker.createPopUp();
+                    error.show("Please have all fields filled out and have a valid number for ingredient amount\n" +
+                            "Please have at least 1 ingredient added to the log\n" +
+                            "Please have only 1 of Breakfast, Lunch or Dinner per day");
                 }
             }
         });
@@ -659,6 +714,9 @@ class CreateExerciseLogScreen extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 try {
                     if(exerciseTypeTextField.getText().isBlank()) throw new Exception("Missing exercise type");
+                    if(dateTextField.getText().isBlank()) throw new Exception("Fill out Date text field");
+                    if(timeTextField.getText().isBlank()) throw new Exception("Fill out Time text field");
+                    if(durationTextField.getText().isBlank()) throw new Exception("Fill out Duration text field");
                     main.addExerciseLog(
                             Date.valueOf(dateTextField.getText()),
                             Time.valueOf(timeTextField.getText()+":00"),
@@ -666,9 +724,15 @@ class CreateExerciseLogScreen extends JPanel {
                             Integer.parseInt(durationTextField.getText()),
                             intensityComboBox.getSelectedItem().toString()
                     );
+                    dateTextField.setText("");
+                    timeTextField.setText("");
+                    exerciseTypeTextField.setText("");
+                    durationTextField.setText("");
+                    intensityComboBox.setSelectedIndex(0);
                 } catch(Exception ex) {
-                    PopUpWindowMaker error = new PopUpWindowMaker();
-                    error.showError("Please have all fields filled out and have a valid number for duration\n");
+                    PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("error");
+                    PopUpWindow error = popUpWindowMaker.createPopUp();
+                    error.show("Please have all fields filled out and have a valid number for duration\n");
                 }
             }
         });
@@ -726,11 +790,16 @@ class ViewCaloriesOverTimeScreen extends JPanel implements ProfileObserver{
             public void actionPerformed(ActionEvent e) {
                 try {
                     if(selectedProfile.getDietLogs().isEmpty() || selectedProfile.getExerciseLogs().isEmpty()) throw new Exception("No dietlogs/exercise logs available");
+                    if(startTextField.getText().isBlank()) throw new Exception("Fill out Start Date text field");
+                    if(endTextField.getText().isBlank()) throw new Exception("Fill out End Date text field");
                     Visualizer visualizer = new CalorieExerciseVisualizer(Date.valueOf(startTextField.getText()), Date.valueOf(endTextField.getText()), selectedProfile.getDietLogs(), selectedProfile.getExerciseLogs());
-                    visualizer.show();
                 } catch(Exception ex) {
-                    PopUpWindowMaker error = new PopUpWindowMaker();
-                    error.showError("Please have a minimum of 1 dietlog and 1 exerciselog\n");
+                    ex.printStackTrace();
+                    PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("error");
+                    PopUpWindow error = popUpWindowMaker.createPopUp();
+                    error.show("Make sure you have a minimum of 1 dietlog and exerciselog\n" +
+                            "Make sure you have Start and End text fields filled out\n" +
+                            "Make sure Start date is before End date");
                 }
             }
         });
@@ -790,11 +859,15 @@ class ViewDailyNutrientIntakeScreen extends JPanel implements ProfileObserver{
             public void actionPerformed(ActionEvent e) {
                 try {
                     if(selectedProfile.getDietLogs().isEmpty()) throw new Exception("No dietlogs/exercise logs available");
+                    if(startTextField.getText().isBlank()) throw new Exception("Fill out Start Date text field");
+                    if(endTextField.getText().isBlank()) throw new Exception("Fill out End Date text field");
                     Visualizer visualizer = new NutrientIntakeVisualizer(Date.valueOf(startTextField.getText()), Date.valueOf(endTextField.getText()), selectedProfile.getDietLogs());
-                    visualizer.show();
                 } catch(Exception ex) {
-                    PopUpWindowMaker error = new PopUpWindowMaker();
-                    error.showError("Please have a minimum of 1 dietlog and 1 exerciselog\n");
+                    PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("error");
+                    PopUpWindow error = popUpWindowMaker.createPopUp();
+                    error.show("Make sure you have a minimum of 1 dietlog\n" +
+                            "Make sure you have Start and End text fields filled out\n" +
+                            "Make sure Start date is before End date");
                 }
             }
         });
@@ -838,14 +911,13 @@ class ViewFatLossScreen extends JPanel implements ProfileObserver{
     }
     public void build(UserProfile selectedProfile){
         this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-
         JLabel future = new JLabel("Enter a Future Date(format: yyyy-mm-dd): ");
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         DateFormatter dateFormatter = new DateFormatter(dateFormat);
         JFormattedTextField futureTextField = new JFormattedTextField(dateFormatter);
-        futureTextField.setPreferredSize(new Dimension(500, 30));
-        JLabel result = new JLabel("Result: ");
 
+        JLabel result = new JLabel("Result: ");
+        result.setFont(new Font("Serif", Font.PLAIN, 24));
         JButton calculate = new JButton("Calculate");
         NavigateButton cancel = new NavigateButton("Go Back", "MainMenu", switchScreensListener);
         cancel.addActionListener(new ActionListener() {
@@ -861,12 +933,17 @@ class ViewFatLossScreen extends JPanel implements ProfileObserver{
             public void actionPerformed(ActionEvent e) {
                 try {
                     if(selectedProfile.getDietLogs().isEmpty() || selectedProfile.getExerciseLogs().isEmpty()) throw new Exception("No dietlogs/exercise logs available");
+                    if(futureTextField.getText().isBlank()) throw new Exception("Future text field is empty");
                     FatLoss fatLoss = new FatLoss(Date.valueOf(futureTextField.getText()), selectedProfile.getDietLogs(), selectedProfile.getExerciseLogs());
-                    result.setText("Result: "+fatLoss.getFatLossAmount() +"kg");
+                    if(fatLoss.getFatLossAmount() >= 0) result.setText("Result: "+fatLoss.getFatLossAmount() +"kg gained");
+                    else result.setText("Result: "+fatLoss.getFatLossAmount()*-1 +"kg lost");
                 } catch(Exception ex) {
-                    PopUpWindowMaker error = new PopUpWindowMaker();
+                    PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("error");
+                    PopUpWindow error = popUpWindowMaker.createPopUp();
+                    error.show("Make sure you have a minimum of 1 dietlog and 1 exercise log\n" +
+                            "Make sure you have Future text field filled out\n" +
+                            "Make sure Future date is a date after the newest Diet/Exercise log");
                     ex.printStackTrace();
-                    error.showError("Please have a minimum of 1 dietlog and 1 exerciselog\n");
                 }
             }
         });

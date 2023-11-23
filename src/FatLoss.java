@@ -10,20 +10,17 @@ import java.util.List;
 
 class FatLoss {
     private double fatLossAmount;
-    public FatLoss(Date future, List<DietLog> dietLogs, List<ExerciseLog> exerciseLogs){
+    public FatLoss(Date future, List<DietLog> dietLogs, List<ExerciseLog> exerciseLogs) throws Exception {
         //sort dietlog
         List<Log> combinedList = new ArrayList<>();
         combinedList.addAll(dietLogs);
         combinedList.addAll(exerciseLogs);
         combinedList.sort((Comparator.comparing(Log::getDate)));
-        for(Log log : combinedList){
-            System.out.println(log.getDate().toString()+"");
-        }
 
         this.fatLossAmount = calculateFatLoss(combinedList, future);
     }
     public double getFatLossAmount(){ return this.fatLossAmount; }
-    public double calculateFatLoss(List<Log> combinedList, Date future){
+    public double calculateFatLoss(List<Log> combinedList, Date future) throws Exception {
         double x = 0;
         double y = 0;
         double xx = 0;
@@ -31,10 +28,14 @@ class FatLoss {
         double xy = 0;
         int n = combinedList.size();
         LocalDateTime start = LocalDate.parse(combinedList.get(0).getDate().toString()).atStartOfDay();
+        Date end = combinedList.getLast().getDate();
+        Date e = Date.valueOf(LocalDate.parse(end.toString()).plusDays(1).toString());
+        if(future.before(e)){
+            throw new Exception("Future date must be a date in the future");
+        }
         for(Log log : combinedList){
             LocalDateTime logDate = LocalDate.parse(log.getDate().toString()).atStartOfDay();
             long daysBetween = Duration.between(start, logDate).toDays() + 1;
-            System.out.println ("DietDays: " + daysBetween);
             x += daysBetween;
             xx += daysBetween*daysBetween;
 

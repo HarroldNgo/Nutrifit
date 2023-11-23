@@ -35,19 +35,16 @@ public class Main extends Observable {
      * @throws ParseException
      */
     private Main () throws ParseException {
-        this.dm = JDBC.getInstance();
+        dm = new DataManager(JDBC.getInstance());
         this.profileList = dataToUserProfileList();
 
         this.foodName = dm.fetchData("food name");
 
     }
     public static Main getInstance() throws ParseException {
-        if(mainInstance == null) {
-            mainInstance = new Main();
-        }
+        if(mainInstance==null) mainInstance = new Main();
         return mainInstance;
     }
-
     /**
      * Method used to initialize an instance of the GUI
      * which will display the screen
@@ -91,7 +88,14 @@ public class Main extends Observable {
     public UserProfile getSelectedProfile() {
         return selectedProfile;
     }
-    public void addDietLog(Date date, String mealType, Map<String, Integer> ingredients){
+    public void addDietLog(Date date, String mealType, Map<String, Integer> ingredients) throws Exception {
+        for(DietLog dietLog : selectedProfile.getDietLogs()){
+            if(date.equals(dietLog.getDate())){
+                if(!mealType.equals("Snack") && mealType.equals(dietLog.getMealType())){
+                    throw new Exception("Only 1 of Breakfast, Lunch or Dinner per day");
+                }
+            }
+        }
         selectedProfile.addDietLog(date, mealType, ingredients);
         this.gui.updateDietLogsScreen();
     }
@@ -102,10 +106,6 @@ public class Main extends Observable {
     }
     public void addObserver(ProfileObserver observer) {
         observers.add(observer);
-    }
-
-    public void removeObserver(ProfileObserver observer) {
-        observers.remove(observer);
     }
 
     public void notifyObservers() {

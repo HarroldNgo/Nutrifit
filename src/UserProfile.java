@@ -150,7 +150,7 @@ public class UserProfile {
         DietLog dietLog = new DietLog(date, meal);
         dietlogs.add(dietLog);
         //add to database
-        DataManager dm = JDBC.getInstance();
+        DataManager dm = new DataManager(JDBC.getInstance());
         List<String> data = dietLog.toStringList();
         data.add(""+this.getId());
         dm.addData("dietlogs", data);
@@ -170,7 +170,7 @@ public class UserProfile {
         exerciseLog.calculateCaloriesBurnt(this.BMR);
         exerciselogs.add(exerciseLog);
         //add to database
-        DataManager dm = JDBC.getInstance();
+        DataManager dm = new DataManager(JDBC.getInstance());
         List<String> data = exerciseLog.toStringList();
         data.add(""+this.getId());
         dm.addData("exerciselogs", data);
