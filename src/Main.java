@@ -151,8 +151,7 @@ public class Main extends Observable {
         return listOfProfiles;
     }
     public static void main(String[] arg) throws ParseException {
-        Main main = Main.getInstance();
-        main.startGUI();
+
     }
 }
 

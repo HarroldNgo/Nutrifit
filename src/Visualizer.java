@@ -75,7 +75,6 @@ class CalorieExerciseVisualizer extends Visualizer {
             Date e = Date.valueOf(LocalDate.parse(end.toString()).plusDays(1).toString());
             long diff = end.getTime() - start.getTime();
             long numDays = (diff / (1000 * 60 * 60 * 24)) % 365;
-            System.out.println(s.toString()+" "+e.toString());
             if(numDays < 0){
                 throw new Exception("Start must be before end date");
             }
