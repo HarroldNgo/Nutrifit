@@ -69,40 +69,51 @@ class CalorieExerciseVisualizer extends Visualizer {
 
     @Override
     public void addToDataset() throws Exception {
-        //Iterates through each diet log to find logs that correspond to the specified time range
-        for(DietLog log : dietLogs) {
-            Date s = Date.valueOf(LocalDate.parse(start.toString()).minusDays(1).toString());
-            Date e = Date.valueOf(LocalDate.parse(end.toString()).plusDays(1).toString());
-            long diff = end.getTime() - start.getTime();
-            long numDays = (diff / (1000 * 60 * 60 * 24)) % 365;
-            if(numDays < 0){
-                throw new Exception("Start must be before end date");
-            }
-            if(log.getDate().after(s) && log.getDate().before(e)){
-                long difference = log.getDate().getTime() - start.getTime();
-                long day = (difference / (1000 * 60 * 60 * 24)) % 365;
-                double calories = 0;
-                for(Nutrient nutrient : log.getNutrients()){
-                    if(nutrient.getNutrient().compareTo("ENERGY (KILOCALORIES)")==0){
-                        calories += nutrient.getAmount();
-                        break;
-                    }
-                }
-                dataset.addValue(calories, "Calories Gained", "Day " + day);
-            }
+        List<Log> combinedList = new ArrayList<>();
+        combinedList.addAll(dietLogs);
+        combinedList.addAll(exerciseLogs);
+
+        Date s = Date.valueOf(LocalDate.parse(start.toString()).minusDays(1).toString());
+        Date e = Date.valueOf(LocalDate.parse(end.toString()).plusDays(1).toString());
+        long diff = end.getTime() - start.getTime();
+        long numDays = (diff / (1000 * 60 * 60 * 24)) % 365;
+        if(numDays < 0){
+            throw new Exception("Start must be before end date");
         }
 
-        //Iterates through each exercise log to find logs that correspond to the specified time range
-        for(ExerciseLog log : exerciseLogs) {
-            Date s = Date.valueOf(LocalDate.parse(start.toString()).minusDays(1).toString());
-            Date e = Date.valueOf(LocalDate.parse(end.toString()).plusDays(1).toString());
+        Map<Date, Double> multipleDietValueDays = new HashMap<>();
+        Map<Date, Double> multipleExerciseValueDays = new HashMap<>();
+        for(Log log : combinedList){
             if(log.getDate().after(s) && log.getDate().before(e)){
-                long difference = log.getDate().getTime() - start.getTime();
-                long day = (difference / (1000 * 60 * 60 * 24)) % 365;
-
-                double calories = log.getCaloriesBurnt();
-                dataset.addValue(calories, "Calories Burnt", "Day " + day);
+                if(log instanceof DietLog){
+                    double calories = ((DietLog) log).getCalories();
+                    if(multipleDietValueDays.containsKey(log.getDate())){
+                        multipleDietValueDays.put(log.getDate(), multipleDietValueDays.get(log.getDate())+calories);
+                    }
+                    else {
+                        multipleDietValueDays.put(log.getDate(), calories);
+                    }
+                }
+                else {
+                    double caloriesBurnt = ((ExerciseLog) log).getCaloriesBurnt();
+                    if(multipleExerciseValueDays.containsKey(log.getDate())){
+                        multipleExerciseValueDays.put(log.getDate(), multipleExerciseValueDays.get(log.getDate())+caloriesBurnt);
+                    }
+                    else {
+                        multipleExerciseValueDays.put(log.getDate(), caloriesBurnt);
+                    }
+                }
             }
+        }
+        for(Map.Entry<Date, Double> entry : multipleDietValueDays.entrySet()){
+            long difference = entry.getKey().getTime() - start.getTime();
+            long day = (difference / (1000 * 60 * 60 * 24)) % 365;
+            dataset.addValue(entry.getValue(), "Calories", "Day " + day);
+        }
+        for(Map.Entry<Date, Double> entry : multipleExerciseValueDays.entrySet()){
+            long difference = entry.getKey().getTime() - start.getTime();
+            long day = (difference / (1000 * 60 * 60 * 24)) % 365;
+            dataset.addValue(entry.getValue(), "Calories Burnt", "Day " + day);
         }
     }
 

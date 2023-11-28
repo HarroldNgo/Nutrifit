@@ -935,8 +935,10 @@ class ViewFatLossScreen extends JPanel implements ProfileObserver{
                     if(selectedProfile.getDietLogs().isEmpty() || selectedProfile.getExerciseLogs().isEmpty()) throw new Exception("No dietlogs/exercise logs available");
                     if(futureTextField.getText().isBlank()) throw new Exception("Future text field is empty");
                     FatLoss fatLoss = new FatLoss(Date.valueOf(futureTextField.getText()), selectedProfile.getDietLogs(), selectedProfile.getExerciseLogs());
+
                     if(fatLoss.getFatLossAmount() >= 0) result.setText("Result: "+fatLoss.getFatLossAmount() +"kg gained");
                     else result.setText("Result: "+fatLoss.getFatLossAmount()*-1 +"kg lost");
+
                 } catch(Exception ex) {
                     PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("error");
                     PopUpWindow error = popUpWindowMaker.createPopUp();
