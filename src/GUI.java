@@ -69,10 +69,10 @@ class CreateUserProfileScreen extends JPanel{
         DateFormatter dateFormatter = new DateFormatter(dateFormat);
         JFormattedTextField dateTextField = new JFormattedTextField(dateFormatter);
 
-        JLabel height = new JLabel("Height: ");
+        JLabel height = new JLabel("Height(cm): ");
         JTextField heightTextField = new JTextField(20);
 
-        JLabel weight = new JLabel("Weight: ");
+        JLabel weight = new JLabel("Weight(kg): ");
         JTextField weightTextField = new JTextField(20);
 
         JLabel units = new JLabel("Unit of Measurement: ");
@@ -292,11 +292,11 @@ class EditProfileScreen extends JPanel implements ProfileObserver{
         JFormattedTextField dateTextField = new JFormattedTextField(dateFormatter);
         dateTextField.setText(selectedProfile.getDateOfBirth().toString());
 
-        JLabel height = new JLabel("Height: ");
+        JLabel height = new JLabel("Height(cm): ");
         JTextField heightTextField = new JTextField(20);
         heightTextField.setText(""+selectedProfile.getHeight());
 
-        JLabel weight = new JLabel("Weight: ");
+        JLabel weight = new JLabel("Weight(kg): ");
         JTextField weightTextField = new JTextField(20);
         weightTextField.setText(""+selectedProfile.getWeight());
 
@@ -692,7 +692,7 @@ class CreateExerciseLogScreen extends JPanel {
         JFormattedTextField dateTextField = new JFormattedTextField(dateFormatter);
         dateTextField.setPreferredSize(new Dimension(500, 30));
 
-        JLabel time = new JLabel("Time of Entry(format: hh:mm)");
+        JLabel time = new JLabel("Time of Entry(24hr-format: hh:mm)");
         DateFormat timeFormat = new SimpleDateFormat("HH:mm");
         DateFormatter timeFormatter = new DateFormatter(timeFormat);
         JFormattedTextField timeTextField = new JFormattedTextField(timeFormatter);

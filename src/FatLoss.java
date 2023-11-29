@@ -28,7 +28,7 @@ class FatLoss {
         double xy = 0;
         int n = combinedList.size();
         LocalDateTime start = LocalDate.parse(combinedList.get(0).getDate().toString()).atStartOfDay();
-        Date end = combinedList.getLast().getDate();
+        Date end = combinedList.get(combinedList.size()-1).getDate();
         Date e = Date.valueOf(LocalDate.parse(end.toString()).plusDays(1).toString());
         if(future.before(e)){
             throw new Exception("Future date must be a date in the future");
