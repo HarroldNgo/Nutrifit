@@ -150,10 +150,12 @@ class NutrientIntakeVisualizer extends Visualizer {
     private Date end;
     private List<DietLog> dietLogs;
     private JFreeChart recommendedChart;
-    public NutrientIntakeVisualizer(Date start, Date end, List<DietLog> dietLogs) throws Exception {
+    private int showNumber;
+    public NutrientIntakeVisualizer(Date start, Date end, List<DietLog> dietLogs, int showNumber) throws Exception {
         this.start=start;
         this.end=end;
         this.dietLogs=dietLogs;
+        this.showNumber = showNumber;
         addToDataset();
         createChart();
         createRecommendedChart();
@@ -211,13 +213,15 @@ class NutrientIntakeVisualizer extends Visualizer {
         }
         for(Double amt : allNutrientsAmt){
             for(Map.Entry<String, Double> entry : tempMap.entrySet()){
-                if(count>4) break;
+                if(count>showNumber-1) break;
                 if(amt==entry.getValue()){
                     double percentValue = ((entry.getValue()) / numOfDays / total)*100;
                     dataset.addValue(percentValue, "Nutrients", entry.getKey());
                     count++;
+                    break;
                 }
             }
+            System.out.println(""+amt/numOfDays);
             double otherPercentValues = ((amt) / numOfDays / total)*100;
             others += otherPercentValues;
         }

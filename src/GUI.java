@@ -853,15 +853,33 @@ class ViewDailyNutrientIntakeScreen extends JPanel implements ProfileObserver{
         JFormattedTextField endTextField = new JFormattedTextField(dateFormatter);
         endTextField.setPreferredSize(new Dimension(500, 30));
 
-        JButton generate = new JButton("Generate");
-        generate.addActionListener(new ActionListener() {
+        JButton generate5 = new JButton("Generate Top 5");
+        generate5.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
                     if(selectedProfile.getDietLogs().isEmpty()) throw new Exception("No dietlogs/exercise logs available");
                     if(startTextField.getText().isBlank()) throw new Exception("Fill out Start Date text field");
                     if(endTextField.getText().isBlank()) throw new Exception("Fill out End Date text field");
-                    Visualizer visualizer = new NutrientIntakeVisualizer(Date.valueOf(startTextField.getText()), Date.valueOf(endTextField.getText()), selectedProfile.getDietLogs());
+                    Visualizer visualizer = new NutrientIntakeVisualizer(Date.valueOf(startTextField.getText()), Date.valueOf(endTextField.getText()), selectedProfile.getDietLogs(),5);
+                } catch(Exception ex) {
+                    PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("error");
+                    PopUpWindow error = popUpWindowMaker.createPopUp();
+                    error.show("Make sure you have a minimum of 1 dietlog\n" +
+                            "Make sure you have Start and End text fields filled out\n" +
+                            "Make sure Start date is before End date");
+                }
+            }
+        });
+        JButton generate10 = new JButton("Generate Top 10");
+        generate10.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if(selectedProfile.getDietLogs().isEmpty()) throw new Exception("No dietlogs/exercise logs available");
+                    if(startTextField.getText().isBlank()) throw new Exception("Fill out Start Date text field");
+                    if(endTextField.getText().isBlank()) throw new Exception("Fill out End Date text field");
+                    Visualizer visualizer = new NutrientIntakeVisualizer(Date.valueOf(startTextField.getText()), Date.valueOf(endTextField.getText()), selectedProfile.getDietLogs(), 10);
                 } catch(Exception ex) {
                     PopUpWindowMaker popUpWindowMaker = new PopUpWindowMaker("error");
                     PopUpWindow error = popUpWindowMaker.createPopUp();
@@ -883,7 +901,8 @@ class ViewDailyNutrientIntakeScreen extends JPanel implements ProfileObserver{
 
         JPanel buttonGroup = new JPanel();
         buttonGroup.add(cancel);
-        buttonGroup.add(generate);
+        buttonGroup.add(generate5);
+        buttonGroup.add(generate10);
         this.add(start);
         this.add(startTextField);
         this.add(end);
