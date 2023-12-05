@@ -26,6 +26,7 @@ public class AutoCompletion extends PlainDocument {
         this.comboBox = comboBox;
         model = comboBox.getModel();
         comboBox.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (!selecting) highlightCompletedText(0);
             }
@@ -56,9 +57,11 @@ public class AutoCompletion extends PlainDocument {
         hidePopupOnFocusLoss=System.getProperty("java.version").startsWith("1.5");
         // Highlight whole text when gaining focus
         editorFocusListener = new FocusAdapter() {
+            @Override
             public void focusGained(FocusEvent e) {
                 highlightCompletedText(0);
             }
+            @Override
             public void focusLost(FocusEvent e) {
                 // Workaround for Bug 5100422 - Hide Popup on focus loss
                 if (hidePopupOnFocusLoss) comboBox.setPopupVisible(false);
@@ -92,6 +95,7 @@ public class AutoCompletion extends PlainDocument {
         }
     }
 
+    @Override
     public void remove(int offs, int len) throws BadLocationException {
         // return immediately when selecting an item
         if (selecting) return;
@@ -109,7 +113,7 @@ public class AutoCompletion extends PlainDocument {
             super.remove(offs, len);
         }
     }
-
+    @Override
     public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
         // return immediately when selecting an item
         if (selecting) return;
@@ -192,6 +196,7 @@ public class AutoCompletion extends PlainDocument {
 
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 createAndShowGUI();
             }
