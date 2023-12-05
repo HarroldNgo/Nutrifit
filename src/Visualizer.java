@@ -1,27 +1,27 @@
 
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.annotations.XYShapeAnnotation;
-import org.jfree.chart.plot.CategoryPlot;
-import org.jfree.chart.renderer.category.LineAndShapeRenderer;
-import org.jfree.data.category.CategoryDataset;
-import org.jfree.data.category.DefaultCategoryDataset;
-import org.jfree.data.general.DefaultPieDataset;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Ellipse2D;
-import java.nio.ByteOrder;
-import java.sql.Time;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.sql.Date;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.sql.Date;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.swing.JFrame;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.renderer.category.LineAndShapeRenderer;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.general.DefaultPieDataset;
 
 /**
  * An abstract class used to help with the initialization of all types of
@@ -81,8 +81,8 @@ class CalorieExerciseVisualizer extends Visualizer {
             throw new Exception("Start must be before end date");
         }
 
-        Map<Date, Double> multipleDietValueDays = new HashMap<>();
-        Map<Date, Double> multipleExerciseValueDays = new HashMap<>();
+        Map<Date, Double> multipleDietValueDays = new LinkedHashMap<>();
+        Map<Date, Double> multipleExerciseValueDays = new LinkedHashMap<>();
         for(Log log : combinedList){
             if(log.getDate().after(s) && log.getDate().before(e)){
                 if(log instanceof DietLog){
@@ -162,19 +162,42 @@ class NutrientIntakeVisualizer extends Visualizer {
         show();
     }
     public void createRecommendedChart(){
-        DefaultCategoryDataset recommendedDataset = new DefaultCategoryDataset();
-        recommendedDataset.addValue((300000/414974.0)*100, "Nutrients", "Carbohydrate");
-        recommendedDataset.addValue((65000/414974.0)*100, "Nutrients", "Fat");
-        recommendedDataset.addValue((25000/414974.0)*100, "Nutrients", "Fibre");
-        recommendedDataset.addValue((20000/414974.0)*100, "Nutrients", "Satu/Trans Fats");
-        recommendedDataset.addValue((2400/414974.0)*100, "Nutrients", "Sodium");
-        recommendedDataset.addValue((2574/414974.0)*100, "Nutrients", "Other Nutrients");
-        this.recommendedChart = ChartFactory.createBarChart(
-                "Recommended Daily Nutrients",
-                "Nutrients",
-                "Amount(%)",
-                recommendedDataset
-        );
+        //Probably a better way to have a dataset of 5 and dataset of 10
+        DefaultCategoryDataset recommendedDataset5 = new DefaultCategoryDataset();
+    	DefaultCategoryDataset recommendedDataset10 = new DefaultCategoryDataset();
+    	
+    	recommendedDataset5.addValue((100000000/234984157.4)*100, "Nutrients", "Sugars");
+        recommendedDataset5.addValue((75000000/234984157.4)*100, "Nutrients", "Fat");
+        recommendedDataset5.addValue((28000000/234984157.4)*100, "Nutrients", "Fibre");
+        recommendedDataset5.addValue((20000000/234984157.4)*100, "Nutrients", "Sat/Trans Fats");
+        recommendedDataset5.addValue((3400000/234984157.4)*100, "Nutrients", "Potassium");
+        
+        recommendedDataset10.addValue((100000000/234984157.4)*100, "Nutrients", "Sugars");
+        recommendedDataset10.addValue((75000000/234984157.4)*100, "Nutrients", "Fat");
+        recommendedDataset10.addValue((28000000/234984157.4)*100, "Nutrients", "Fibre");
+        recommendedDataset10.addValue((20000000/234984157.4)*100, "Nutrients", "Sat/Trans Fats");
+        recommendedDataset10.addValue((3400000/234984157.4)*100, "Nutrients", "Potassium");
+        recommendedDataset10.addValue((2300000/234984157.4)*100, "Nutrients", "Chloride");
+        recommendedDataset10.addValue((2300000/234984157.4)*100, "Nutrients", "Sodium");
+        recommendedDataset10.addValue((1300000/234984157.4)*100, "Nutrients", "Calcium");
+        recommendedDataset10.addValue((1250000/234984157.4)*100, "Nutrients", "Phosphorus");
+        recommendedDataset10.addValue((550000/234984157.4)*100, "Nutrients", "Choline");
+        
+       if (showNumber == 5) {
+        	this.recommendedChart = ChartFactory.createBarChart(
+                    "Recommended Daily Nutrients",
+                    "Nutrients",
+                    "Amount(%)",
+                    recommendedDataset5
+            );
+        } else {
+        	this.recommendedChart = ChartFactory.createBarChart(
+                    "Recommended Daily Nutrients",
+                    "Nutrients",
+                    "Amount(%)",
+                    recommendedDataset10
+            );
+        }
     }
 
     @Override
